@@ -169,7 +169,21 @@ async fn main() -> Result<()> {
             let webhook_url = env::var("MEMOBUILD_WEBHOOK").ok();
             let data_dir = env::current_dir()?.join(".memobuild-server");
             fs::create_dir_all(&data_dir)?;
-            server::start_server(port, data_dir, webhook_url).await
+
+            // Load TLS config if provided
+            let tls_config = if let (Ok(cert), Ok(key), Ok(ca)) = (
+                env::var("MEMOBUILD_TLS_CERT"),
+                env::var("MEMOBUILD_TLS_KEY"),
+                env::var("MEMOBUILD_TLS_CA"),
+            ) {
+                Some(memobuild::tls::TlsConfig::from_files(&cert, &key, &ca)?)
+            } else {
+                None
+            };
+
+            let admin_token = env::var("MEMOBUILD_ADMIN_TOKEN").ok();
+
+            server::start_server(port, data_dir, webhook_url, tls_config, admin_token).await
         }
         Commands::Scheduler { port } => start_scheduler(port).await,
         Commands::Worker {
