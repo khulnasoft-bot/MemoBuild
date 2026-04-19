@@ -84,4 +84,5 @@ tempfile = "3"
 
 [[bench]]
 name = "core_bench"
+path = "benches/core_bench.rs"
 harness = false
